@@ -29,7 +29,7 @@ async function syncAll(){
         }
     }
     await Promise.all(procs);
-    sycning = false;
+    syncing = false;
 }
 async function startSync(){
     if(!syncing){

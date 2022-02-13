@@ -78,7 +78,7 @@ async function executeQueryFromNode(node, query) {
             return (await pool3.query(query))[0];
 
         default:
-            throw 'Node specified cannot be identified.';
+            throw '404 node not found';
     }
 }
 // Case #1: All transactions are reading.

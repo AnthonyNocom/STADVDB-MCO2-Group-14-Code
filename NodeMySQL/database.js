@@ -217,7 +217,7 @@ function case3() {
 /*UPDATER UPDATES UPDATEE*/
 function syncNodes(updatee,updater){
 }
-/* PARAMS
+/* PARAMS data holds the data to add for update, or the data to delete, or data to insert
 node:  node name
 queryType: name of the CRUD operation
 updater: Node that is doing the updating
@@ -233,7 +233,7 @@ async function sync(node,queryType,updater,updaterLastUpdate,data){
      for(const query of queries){
          await conn.query(query);
      }
-     await commitReplicationTransaction(conn);
+     await commitReplication(conn);
      /*TODO: VERSION CONTROL FOR ROLLBACK*/
      await updateVersion();
  } catch(err){

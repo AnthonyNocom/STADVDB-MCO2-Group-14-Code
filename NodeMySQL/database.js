@@ -21,6 +21,49 @@ const pool3 = createPool({
     connectionLimit: 10,
 })
 
+function askIsolationLevel() {
+    const prompt = require("prompt-sync")()
+
+    let ask = "Which Isolation Lavel Will You Choose?"
+    let op1 = "[1] Read Uncommitted"
+    let op2 = "\n[2] Read Committed"
+    let op3 = "\n[3] Read Repeatable"
+    let op4 = "\n[4] Serializable"
+  
+    const input = prompt(ask.concat(op1,op2,op3,op4))
+    console.log(`Simulated: ${input}`)
+    return input
+}
+
+
+function setIsolationLevel(num){
+    let setSession = 'SET SESSION TRANSACTION ISOLATION LEVEL '
+
+    switch(num){
+      case "1":
+       setSession = setSession.concat('Read Uncommitted')       
+      break;
+
+      case "2":
+        setSession = setSession.concat('Read Committed') 
+      break;
+
+      case "3":
+        setSession = setSession.concat('Read Repeatable') 
+      break;
+
+      case "4":
+        setSession = setSession.concat('Serializable') 
+      break;
+    }
+
+    pool1.query(setSession, function(err) {})
+    pool2.query(setSession, function(err) {})
+    pool3.query(setSession, function(err) {})
+  
+    return;
+}
+
 // Prompts the user which case to simulate, returns 1, 2, or 3
 function promptUser() {
     const prompt = require("prompt-sync")()
@@ -237,5 +280,9 @@ async function rollbackReplication(){
     conn.release();
 }
 // Simulate concurrency control
-var input = promptUser()
+
+var isolationLevel = askIsolationLevel()
+setIsolationLevel(isolationLevel)
+
+var input = askSimulationCase()
 simulateCase(input)

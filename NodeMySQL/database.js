@@ -2,21 +2,18 @@
 
 // MySQL connection
 const {createPool} = require('mysql')
-
 const pool1 = createPool({
     host: "node-1.mysql.database.azure.com",
     user: "STADVDB",
     password: "MCO2_GRP14",
     connectionLimit: 10,
 })
-
 const pool2 = createPool({
     host: "node-2.mysql.database.azure.com",
     user: "STADVDB",
     password: "MCO2_GRP14",
     connectionLimit: 10,
 })
-
 const pool3 = createPool({
     host: "node-3.mysql.database.azure.com",
     user: "STADVDB",
@@ -58,19 +55,50 @@ function simulateCase(caseNum) {
     }
 }
 
+async function getNodeConn(node){
+    switch(node){
+        case 'node-1':
+            return await pool1.getConnection();
+        case 'node-2':
+            return await pool2.getConnection();
+        case 'node-3':
+            return await pool3.getConnection();
+        default:
+            throw '404 node not found';
+    }
+}
+
+async function executeQueryFromNode(node, query) {
+    switch (node) {
+        case 'node-1':
+            return (await pool1.query(query))[0];
+        case 'node-2':
+            return (await pool2.query(query))[0];
+        case 'node-3':
+            return (await pool3.query(query))[0];
+
+        default:
+            throw 'Node specified cannot be identified.';
+    }
+}
 // Case #1: All transactions are reading.
 function case1 () {
     try {
+      
         // Node 1 READ transaction
         pool1.query(`select * from imdb_ijs.movies`, (err, res) =>{
             return console.log(res)
         })
 
+        // Node 2 connection
+        
         // Node 2 READ transaction
         pool2.query(`select * from imdb_ijs.movies`, (err, res) =>{
             return console.log(res)
         })
 
+        // Node 3 connection
+        
         // Node 3 READ transaction
         pool3.query(`select * from imdb_ijs.movies`, (err, res) =>{
             return console.log(res)
@@ -143,7 +171,71 @@ function case2() {
 function case3() {
 
 }
+/*UPDATER UPDATES UPDATEE*/
+function syncNodes(updatee,updater){
+}
+/* PARAMS
+node:  node name
+queryType: name of the CRUD operation
+updater: Node that is doing the updating
+updaterLastUpdate: When node last updated
+data: data for CRUD operation
+*/
+async function sync(node,queryType,updater,updaterLastUpdate,data){
+ const query= getCRUD(queryType,data);
+ const queries = query.split(';');
+ queries.pop();
+ try{
+     var conn = await startReplication(node);
+     for(const query of queries){
+         await conn.query(query);
+     }
+     await commitReplicationTransaction(conn);
+     /*TODO: VERSION CONTROL FOR ROLLBACK*/
+     await updateVersion();
+ } catch(err){
+     await rollbackReplication(conn);
+     console.log(err);
+ }
+}
+/*decides which crud operation to do for node synch*/
+function syncCRUD(type,data){
+    
+    if(type === 'UPDATE'){
+        var query = synchupdateQuery(data);
+    }
+    else if(type === 'DELETE'){
+        var query = synchdeleteQuery(data);
+    }
+    if(type === 'INSERT'){
+        var query = synchinsertQuery(data);
+    }
 
+}
+
+async function startReplication(node){
+    const conn = await getNodeConn(node);
+    const start = 'start transaction';
+    const repliflag = 'set @replicator := true';
+
+    await conn.query(start);
+    await conn.query(repliflag);
+    conn.release();
+
+}
+
+async function commitReplication(conn){
+    const commit = 'commit';
+    const revertrepliflag = 'set @replicator := false';
+    await conn.query(revertrepliflag);
+    await conn.query(commit);
+    conn.release();
+}
+async function rollbackReplication(){
+    const rollback = 'rollback';
+    await conn.query(rollback);
+    conn.release();
+}
 // Simulate concurrency control
 var input = promptUser()
 simulateCase(input)

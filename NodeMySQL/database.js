@@ -25,12 +25,15 @@ function askIsolationLevel() {
     const prompt = require("prompt-sync")()
 
     let ask = "Which Isolation Lavel Will You Choose?"
-    let op1 = "\n[1] Read Uncommitted"
-    let op2 = "\n[2] Read Committed"
-    let op3 = "\n[3] Read Repeatable"
-    let op4 = "\n[4] Serializable"
-  
-    const input = prompt(ask.concat(op1,op2,op3,op4))
+    let op1 = "[1] Read Uncommitted"
+    let op2 = "[2] Read Committed"
+    let op3 = "[3] Read Repeatable"
+    let op4 = "[4] Serializable"
+	
+	ask = ask.concat('\n',op1,'\n',op2,'\n',op3,'\n',op4,'\n')
+	console.log(ask);
+	
+    const input = prompt('')
     console.log(`Simulated: ${input}`)
     return input
 }

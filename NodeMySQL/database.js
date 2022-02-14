@@ -37,29 +37,38 @@ function askIsolationLevel() {
 
 
 function setIsolationLevel(num){
-    let setSession = 'SET SESSION TRANSACTION ISOLATION LEVEL '
+    let setSession = `SET SESSION TRANSACTION ISOLATION LEVEL `
 
     switch(num){
       case "1":
-       setSession = setSession.concat('Read Uncommitted')       
+       setSession = setSession.concat(`READ UNCOMMITTED`)       
       break;
 
       case "2":
-        setSession = setSession.concat('Read Committed') 
+        setSession = setSession.concat(`READ COMMITTED`) 
       break;
 
       case "3":
-        setSession = setSession.concat('Read Repeatable') 
+        setSession = setSession.concat(`REPEATABLE READ`) 
       break;
 
       case "4":
-        setSession = setSession.concat('Serializable') 
+        setSession = setSession.concat(`SERIALIZABLE`) 
       break;
     }
 
-    pool1.query(setSession, function(err) {})
-    pool2.query(setSession, function(err) {})
-    pool3.query(setSession, function(err) {})
+    pool1.query(setSession, function(err,res) {
+        if (err) throw err
+        return console.log(res)
+    })
+    pool2.query(setSession, function(err,res) {
+        if (err) throw err
+        return console.log(res)
+    })
+    pool3.query(setSession, function(err,res) {
+        if (err) throw err
+        return console.log(res)
+    })
   
     return;
 }
@@ -206,6 +215,7 @@ function case2() {
         pool3.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
             return console.log(res)
         })
+
      } catch (err) {
          console.log(err)
      }
@@ -282,10 +292,15 @@ function case3() {
             if (err) throw err
 
             connection.beginTransaction(function (err) {
+                if (err) throw err
+
                 connection.query(`select sleep(10)`, (err, res) =>{
                     return console.log(res)
                 })
-                if (err) throw err
+
+                connection.query(`select * from imdb_ijs.movies where id > 20 AND id <= 30`, (err, res) =>{
+                    return console.log(res)
+                })
                 connection.query(`DELETE FROM imdb_ijs.movies
                                 WHERE id > 20 AND id <= 30`, (err, res) => {
                     if (err) {

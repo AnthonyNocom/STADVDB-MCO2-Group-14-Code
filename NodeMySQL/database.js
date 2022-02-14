@@ -324,6 +324,27 @@ function case3() {
      }
 }
 
+function replicateDataIntoNodes(query, year){
+	if(year >= 1980)
+	{
+		try{
+			pool1.query(query)
+			pool3.query(query)
+		}catch (err){
+			console.log(err)
+		}
+	}
+	else
+	{
+		try{
+			pool1.query(query)
+			pool2.query(query)
+		}catch (err){
+			console.log(err)
+		}
+	}
+}
+
 /*UPDATER UPDATES UPDATEE*/
 function syncNodes(updatee,updater){
 }

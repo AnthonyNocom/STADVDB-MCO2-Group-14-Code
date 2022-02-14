@@ -25,7 +25,7 @@ function askIsolationLevel() {
     const prompt = require("prompt-sync")()
 
     let ask = "Which Isolation Lavel Will You Choose?"
-    let op1 = "[1] Read Uncommitted"
+    let op1 = "\n[1] Read Uncommitted"
     let op2 = "\n[2] Read Committed"
     let op3 = "\n[3] Read Repeatable"
     let op4 = "\n[4] Serializable"
@@ -65,7 +65,7 @@ function setIsolationLevel(num){
 }
 
 // Prompts the user which case to simulate, returns 1, 2, or 3
-function promptUser() {
+function askSimulationCase() {
     const prompt = require("prompt-sync")()
 
     const input = prompt("Input Case to Simulate (1, 2, or 3): ")
@@ -198,6 +198,7 @@ function case2() {
                 // rollback changes every time to test what other nodes are reading
                 connection.rollback()
                 console.log('success!');
+                connection.release();
         })
     })
         
@@ -212,8 +213,99 @@ function case2() {
 
 // Case #3: All transactions are writing (update / deletion).
 function case3() {
+    try {
+        // Update first 10 movies and change their years to 1920
+        // Node 1 UPDATE transaction
+        pool1.getConnection(function (err, connection) {
+            if (err) throw err
+            connection.beginTransaction(function (err) {
+                if (err) throw err
+                connection.query(`UPDATE imdb_ijs.movies
+                                SET year = 1920
+                                WHERE id <= 10;`, (err, res) => {
+                    if (err) {
+                        return connection.rollback(function() {
+                            throw err
+                        })
+                    }
+                    return console.log(res)
+                })
+                connection.query(`select sleep(30)`, (err, res) =>{
+                    return console.log(res)
+                })
+                connection.rollback()
+            })
+        })
+        
+        // Update the ranks of all null-rank movies with id's less than 30. Change the ranks to 0.0
+        // Node 2 UPDATE transaction
+        pool2.getConnection(function(err, connection){
+            if (err) throw err;
+            
+            connection.beginTransaction(function(err) {
+                if (err) throw err;
+                connection.query(`select * from imdb_ijs.movies where rank is null and id <= 30`, (err, res) =>{
+                    return console.log(res)
+                })
+                console.log("-----FIRST READ STATEMENT-----")
+                connection.query(`select sleep(8)`, (err, res) =>{
+                    return console.log(res)
+                })
+                connection.query(
+                    `UPDATE imdb_ijs.movies
+                    SET rank = 0.0
+                    WHERE rank is null and id <=30;`, (err, res) =>{
+                    if (err) {
+                        return connection.rollback(function() {
+                            throw err
+                        })
+                    }
+                    return console.log(res)
+                })
+                console.log("-----UPDATE STATEMENT-----")
+                connection.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
+                    return console.log(res)
+                })
+                connection.query(`select sleep(10)`, (err, res) =>{
+                    return console.log(res)
+                })
+                console.log("-----SECOND READ STATEMENT-----")
+                connection.rollback()
+                console.log('success!');
+                connection.release();
+        })
+    })
+        
+        // Delete the movies with id's 21 to 30
+        // Node 3 DELETE transaction
+        pool3.getConnection(function (err, connection) {
+            if (err) throw err
 
+            connection.beginTransaction(function (err) {
+                connection.query(`select sleep(10)`, (err, res) =>{
+                    return console.log(res)
+                })
+                if (err) throw err
+                connection.query(`DELETE FROM imdb_ijs.movies
+                                WHERE id > 20 AND id <= 30`, (err, res) => {
+                    if (err) {
+                        return connection.rollback(function() {
+                            throw err
+                        })
+                    }
+                    return console.log(res)
+                })
+                connection.query(`select sleep(40)`, (err, res) =>{
+                    return console.log(res)
+                })
+                connection.rollback()
+            })
+        })
+     } catch (err) {
+         console.log(err)
+     }
 }
+
 /*UPDATER UPDATES UPDATEE*/
 function syncNodes(updatee,updater){
 }

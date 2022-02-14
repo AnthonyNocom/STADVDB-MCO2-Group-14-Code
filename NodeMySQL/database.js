@@ -324,6 +324,7 @@ function case3() {
      }
 }
 
+<<<<<<< Updated upstream
 function replicateDataIntoNodes(query, year){
 	if(year >= 1980)
 	{
@@ -391,25 +392,9 @@ async function startReplication(node){
     const conn = await getNodeConn(node);
     const start = 'start transaction';
     const repliflag = 'set @replicator := true';
+=======
+>>>>>>> Stashed changes
 
-    await conn.query(start);
-    await conn.query(repliflag);
-    conn.release();
-
-}
-
-async function commitReplication(conn){
-    const commit = 'commit';
-    const revertrepliflag = 'set @replicator := false';
-    await conn.query(revertrepliflag);
-    await conn.query(commit);
-    conn.release();
-}
-async function rollbackReplication(){
-    const rollback = 'rollback';
-    await conn.query(rollback);
-    conn.release();
-}
 // Simulate concurrency control
 
 var isolationLevel = askIsolationLevel()

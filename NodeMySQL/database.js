@@ -40,35 +40,35 @@ function askIsolationLevel() {
 
 
 function setIsolationLevel(num){
-    let setSession = `SET SESSION TRANSACTION ISOLATION LEVEL `
+    let setSession = 'SET SESSION TRANSACTION ISOLATION LEVEL '
 
     switch(num){
       case "1":
-       setSession = setSession.concat(`READ UNCOMMITTED`)       
+       setSession = setSession.concat('READ UNCOMMITTED')       
       break;
 
       case "2":
-        setSession = setSession.concat(`READ COMMITTED`) 
+        setSession = setSession.concat('READ COMMITTED') 
       break;
 
       case "3":
-        setSession = setSession.concat(`REPEATABLE READ`) 
+        setSession = setSession.concat('REPEATABLE READ') 
       break;
 
       case "4":
-        setSession = setSession.concat(`SERIALIZABLE`) 
+        setSession = setSession.concat('SERIALIZABLE') 
       break;
     }
 
-    pool1.query(setSession, function(err,res) {
-        if (err) throw err
-    })
-    pool2.query(setSession, function(err,res) {
-        if (err) throw err
-    })
-    pool3.query(setSession, function(err,res) {
-        if (err) throw err
-    })
+    pool1.on('connection', function (connection) {
+        connection.query(setSession)
+    });
+    pool2.on('connection', function (connection) {
+        connection.query(setSession)
+    });
+    pool3.on('connection', function (connection) {
+        connection.query(setSession)
+    });
   
     return;
 }
@@ -136,23 +136,18 @@ async function executeQueryFromNode(node, query) {
 // Case #1: All transactions are reading.
 function case1 () {
     try {
-      
         // Node 1 READ transaction
-        pool1.query(`select * from imdb_ijs.movies`, (err, res) =>{
+        pool1.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
             return console.log(res)
         })
 
-        // Node 2 connection
-        
         // Node 2 READ transaction
-        pool2.query(`select * from imdb_ijs.movies`, (err, res) =>{
+        pool2.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
             return console.log(res)
         })
 
-        // Node 3 connection
-        
         // Node 3 READ transaction
-        pool3.query(`select * from imdb_ijs.movies`, (err, res) =>{
+        pool3.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
             return console.log(res)
         })
      } catch (err) {

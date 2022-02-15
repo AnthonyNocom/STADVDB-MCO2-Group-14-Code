@@ -321,24 +321,24 @@ function case3() {
      }
 }
 
-/*UPDATER UPDATES UPDATEE*/
-function syncNodes(updatee,updater){
-    try{
-        const { recentUpdate : recendUpdate } = await getRecentUpdate(updater,updatee);
-        const logs = await getChangelogs(node,recentUpdate);
-    }
+// /*UPDATER UPDATES UPDATEE*/
+// function syncNodes(updatee,updater){
+//     try{
+//         const { recentUpdate : recendUpdate } = await getRecentUpdate(updater,updatee);
+//         const logs = await getChangelogs(node,recentUpdate);
+//     }
     
 
-}
+// }
 
-async function getRecentUpdate(updater,node){
-    const query1 = `   select * from imdb_ijs.changelog where updater = '${updater}'`;
-    const [getRecentUpdate] = await executeQueryFromNode(node,query1);
-    return {
-        ...getRecentUpdate,
-        last_update = new Date().toJSON().slice(0, 19).replace('T', ' '),
-    };
-}
+// async function getRecentUpdate(updater,node){
+//     const query1 = `   select * from imdb_ijs.changelog where updater = '${updater}'`;
+//     const [getRecentUpdate] = await executeQueryFromNode(node,query1);
+//     return {
+//         ...getRecentUpdate,
+//         last_update = new Date().toJSON().slice(0, 19).replace('T', ' '),
+//     };
+// }
 /* PARAMS data holds the data to add for update, or the data to delete, or data to insert
 node:  node name
 queryType: name of the CRUD operation

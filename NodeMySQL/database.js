@@ -62,15 +62,12 @@ function setIsolationLevel(num){
 
     pool1.query(setSession, function(err,res) {
         if (err) throw err
-        return console.log(res)
     })
     pool2.query(setSession, function(err,res) {
         if (err) throw err
-        return console.log(res)
     })
     pool3.query(setSession, function(err,res) {
         if (err) throw err
-        return console.log(res)
     })
   
     return;

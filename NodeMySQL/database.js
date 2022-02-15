@@ -324,30 +324,23 @@ function case3() {
      }
 }
 
-<<<<<<< Updated upstream
-function replicateDataIntoNodes(query, year){
-	if(year >= 1980)
-	{
-		try{
-			pool1.query(query)
-			pool3.query(query)
-		}catch (err){
-			console.log(err)
-		}
-	}
-	else
-	{
-		try{
-			pool1.query(query)
-			pool2.query(query)
-		}catch (err){
-			console.log(err)
-		}
-	}
-}
-
 /*UPDATER UPDATES UPDATEE*/
 function syncNodes(updatee,updater){
+    try{
+        const { recentUpdate : recendUpdate } = await getRecentUpdate(updater,updatee);
+        const logs = await getChangelogs(node,recentUpdate);
+    }
+    
+
+}
+
+async function getRecentUpdate(updater,node){
+    const query1 = `   select * from imdb_ijs.changelog where updater = '${updater}'`;
+    const [getRecentUpdate] = await executeQueryFromNode(node,query1);
+    return {
+        ...getRecentUpdate,
+        last_update = new Date().toJSON().slice(0, 19).replace('T', ' '),
+    };
 }
 /* PARAMS data holds the data to add for update, or the data to delete, or data to insert
 node:  node name
@@ -367,11 +360,35 @@ async function sync(node,queryType,updater,updaterLastUpdate,data){
      }
      await commitReplication(conn);
      /*TODO: VERSION CONTROL FOR ROLLBACK*/
-     await updateVersion();
  } catch(err){
      await rollbackReplication(conn);
      console.log(err);
  }
+}
+
+async function getChangelogs(node, timestamp = new DateTime("January 1, 1970 00:00:00")){
+    timestamp = new Date().toJSON().slice(0, 19).replace('T', ' ')
+    const query = `select * from imdb_ijs.changelog where timestamp > '${timestamp}'`; 
+    const results = await executeQueryFromNode(node,query);
+    return results.map((data) => ({
+        ...data,
+        timestamp: timestamp,
+    }));
+}
+
+async function synclogs(logs,updater,updatee){
+    for(log of logs){
+        const data = {
+            node: updatee,
+            name: log.name.replaceAll("'", "\\'").replaceAll('"', '\\"'),
+            year: log.year,
+            rank: log.rank,
+            old_name: log.old_name,
+            old_year: log.old_year,
+            old_rank: log.old_year,
+        }
+        await sync(node,log.crudop,updater,updaterLastUpdate,data);
+    }
 }
 /*decides which crud operation to do for node synch*/
 function syncCRUD(type,data){
@@ -392,9 +409,25 @@ async function startReplication(node){
     const conn = await getNodeConn(node);
     const start = 'start transaction';
     const repliflag = 'set @replicator := true';
-=======
->>>>>>> Stashed changes
 
+    await conn.query(start);
+    await conn.query(repliflag);
+    conn.release();
+
+}
+
+async function commitReplication(conn){
+    const commit = 'commit';
+    const revertrepliflag = 'set @replicator := false';
+    await conn.query(revertrepliflag);
+    await conn.query(commit);
+    conn.release();
+}
+async function rollbackReplication(){
+    const rollback = 'rollback';
+    await conn.query(rollback);
+    conn.release();
+}
 // Simulate concurrency control
 
 var isolationLevel = askIsolationLevel()

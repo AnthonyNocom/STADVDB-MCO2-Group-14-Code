@@ -180,7 +180,7 @@ function case2() {
                     return console.log(res)
                 })
                 // Update movies with null ranks and id's <=30, set null ranks to 0.0
-
+                /*
                 connection.query(
                     `UPDATE imdb_ijs.movies
                     SET rank = 0.0
@@ -192,7 +192,7 @@ function case2() {
                     }
                     return console.log(res)
                 })
-                
+                */
                 console.log("-----UPDATE STATEMENT-----")
                 // Read, wait for 10 seconds, rollback
                 connection.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
@@ -206,7 +206,7 @@ function case2() {
                         if (err) { throw err; }
                         filter( `UPDATE imdb_ijs.movies
                 SET rank = 0.0
-                WHERE rank is null and id <=30;`);
+                WHERE rank is null and id <=30;`,connection,conn,conn1);
                     })
                     })
                 connection.query(`select sleep(10)`, (err, res) =>{
@@ -215,9 +215,7 @@ function case2() {
                 console.log("-----SECOND READ STATEMENT-----")
                 // rollback changes every time to test what other nodes are reading
                 connection.rollback();
-                conn.rollback();
                 conn.release();
-                conn1.rollback();
                 conn1.release();
             })
         })
@@ -234,6 +232,7 @@ function case2() {
      } catch (err) {
          console.log(err)
      }
+     console.log("done");
 }
 
 // Case #3: All transactions are writing (update / deletion).
@@ -339,15 +338,52 @@ function case3() {
      }
 }
 
-async function filter(query){
+async function filter(query,node2,node1,node3){
    
   
-    pool1.query(query);
-    pool2.query(query);
-    pool3.query(query);
-    pool3.query('delete from  imdb_ijs.movies where year >= 1980 ');
-    pool2.query('delete from  imdb_ijs.movies where year < 1980 ');
-    
+    node1.query(query, (err, res) =>{
+        if (err) { // safety net, rollback if update fails
+            return connection.rollback(function() {
+                throw err
+            })
+        }
+        return console.log(res)
+    });
+    node2.query(query, (err, res) =>{
+        if (err) { // safety net, rollback if update fails
+            return connection.rollback(function() {
+                throw err
+            })
+        }
+        return console.log(res)
+    });
+    node3.query(query, (err, res) =>{
+        if (err) { // safety net, rollback if update fails
+            return connection.rollback(function() {
+                throw err
+            })
+        }
+        return console.log(res)
+    });
+    node3.query('delete from  imdb_ijs.movies where year >= 1980 ', (err, res) =>{
+        if (err) { // safety net, rollback if update fails
+            return connection.rollback(function() {
+                throw err
+            })
+        }
+        return console.log(res)
+    });
+    node2.query('delete from  imdb_ijs.movies where year < 1980 ', (err, res) =>{
+        if (err) { // safety net, rollback if update fails
+            return connection.rollback(function() {
+                throw err
+            })
+        }
+        return console.log(res)
+    });
+    node1.rollback();
+    node2.rollback();
+    node3.rollback();
     
 }
 function replicateDataIntoNodes(query, year){

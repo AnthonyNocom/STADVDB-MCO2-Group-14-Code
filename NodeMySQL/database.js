@@ -312,31 +312,41 @@ function case3() {
 }
 
 async function filter(query){
-   
-    pool1.query(query, (err, res) =>{
-        if (err) { // safety net, rollback if update fails
-            return connection.rollback(function() {
-                throw err
+    
+    pool1.getConnection(function (err, connection) {
+        if (err) throw err
+        connection.beginTransaction(function (err) {
+            if (err) throw err
+            connection.query(query, (err, res) => {
+                if (err) throw err
+                return console.log(res)
             })
-        }
-        return console.log(res)
-    });
-    pool2.query(query, (err, res) =>{
-        if (err) { // safety net, rollback if update fails
-            return connection.rollback(function() {
-                throw err
+            connection.rollback()
+        })
+    })
+    pool2.getConnection(function (err, connection) {
+        if (err) throw err
+        connection.beginTransaction(function (err) {
+            if (err) throw err
+            connection.query(query, (err, res) => {
+                if (err) throw err
+                return console.log(res)
             })
-        }
-        return console.log(res)
-    });
-    pool3.query(query, (err, res) =>{
-        if (err) { // safety net, rollback if update fails
-            return connection.rollback(function() {
-                throw err
+            connection.rollback()
+        })
+    })
+    pool3.getConnection(function (err, connection) {
+        if (err) throw err
+        connection.beginTransaction(function (err) {
+            if (err) throw err
+            connection.query(query, (err, res) => {
+                if (err) throw err
+                return console.log(res)
             })
-        }
-        return console.log(res)
-    });
+            connection.rollback()
+        })
+    })
+
     pool3.query('delete from  imdb_ijs.movies where year < 1980 ');
     pool2.query('delete from  imdb_ijs.movies where year >= 1980 ');
     

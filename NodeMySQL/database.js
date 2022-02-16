@@ -337,8 +337,8 @@ async function filter(query){
         }
         return console.log(res)
     });
-    pool3.query('delete from  imdb_ijs.movies where year >= 1980 ');
-    pool2.query('delete from  imdb_ijs.movies where year < 1980 ');
+    pool3.query('delete from  imdb_ijs.movies where year < 1980 ');
+    pool2.query('delete from  imdb_ijs.movies where year >= 1980 ');
     
     
 }

@@ -292,7 +292,7 @@ function case3() {
             
                 filter(`DELETE FROM imdb_ijs.movies
                 WHERE id > 20 AND id <= 30`);
-                connection.query(`select sleep(40)`, (err, res) =>{
+                connection.query(`select sleep(30)`, (err, res) =>{
                     return console.log(res)
                 })
 

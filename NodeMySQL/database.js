@@ -159,9 +159,18 @@ function case1 () {
 function case2() {
  
     try {
-        // // Node 1 READ transaction
-        pool1.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
-            return console.log(res)
+        // Node 1 READ transaction
+        pool1.getConnection(function(err, connection){
+            if (err) throw err
+
+            connection.beginTransaction(function(err) {
+                if (err) throw err
+                connection.query('select sleep(10)', (err,res) => {
+                })
+                connection.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
+                    return console.log(res)
+                })
+            })
         })
         
         // Node 2 UPDATE transaction
@@ -181,7 +190,7 @@ function case2() {
                 })
                 // Update movies with null ranks and id's <=30, set null ranks to 0.0
                 filter( `UPDATE imdb_ijs.movies
-                SET rank = 0.0
+                SET rank = 0
                 WHERE rank is null and id <=30;`);
                 console.log("-----UPDATE STATEMENT-----")
                 // Read, wait for 10 seconds, rollback
@@ -202,8 +211,17 @@ function case2() {
     })
         
         // Node 3 READ transaction
-        pool3.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
-            return console.log(res)
+        pool3.getConnection(function(err, connection){
+            if (err) throw err
+
+            connection.beginTransaction(function(err) {
+                if (err) throw err
+                connection.query('select sleep(10)', (err,res) => {
+                })
+                connection.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
+                    return console.log(res)
+                })
+            })
         })
 
      } catch (err) {

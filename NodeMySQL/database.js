@@ -292,7 +292,7 @@ function case3() {
                 connection.query(`select sleep(10)`, (err, res) =>{
                     return console.log(res)
                 })
-
+                
                 connection.query(`select * from imdb_ijs.movies where id > 20 AND id <= 30`, (err, res) =>{
                     return console.log(res)
                 })
@@ -315,7 +315,12 @@ function case3() {
          console.log(err)
      }
 }
-
+function getYear(data,query){
+    for(year in data){
+        replicateDataIntoNodes(query,year);
+    }
+  
+}
 function replicateDataIntoNodes(query, year){
 	if(year >= 1980)
 	{

@@ -184,7 +184,6 @@ function case2() {
                 connection.query(`select * from imdb_ijs.movies where rank is null and id <= 30`, (err, res) =>{
                     return console.log(res)
                 })
-                console.log("-----FIRST READ STATEMENT-----")
                 connection.query(`select sleep(8)`, (err, res) =>{
                     return console.log(res)
                 })
@@ -192,7 +191,6 @@ function case2() {
                 filter( `UPDATE imdb_ijs.movies
                 SET rank = 0
                 WHERE rank is null and id <=30;`);
-                console.log("-----UPDATE STATEMENT-----")
                 // Read, wait for 10 seconds, rollback
                 connection.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
                     return console.log(res)
@@ -202,10 +200,8 @@ function case2() {
                 connection.query(`select sleep(10)`, (err, res) =>{
                     return console.log(res)
                 })
-                console.log("-----SECOND READ STATEMENT-----")
                 // rollback changes every time to test what other nodes are reading
                 connection.rollback();
-                console.log('success!');
                 connection.release();
         })
     })
@@ -260,23 +256,19 @@ function case3() {
                 connection.query(`select * from imdb_ijs.movies where rank is null and id <= 30`, (err, res) =>{
                     return console.log(res)
                 })
-                console.log("-----FIRST READ STATEMENT-----")
                 connection.query(`select sleep(8)`, (err, res) =>{
                     return console.log(res)
                 })
                 filter( `UPDATE imdb_ijs.movies
                 SET rank = 0.0
                 WHERE rank is null and id <=30;`);
-                console.log("-----UPDATE STATEMENT-----")
                 connection.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
                     return console.log(res)
                 })
                 connection.query(`select sleep(10)`, (err, res) =>{
                     return console.log(res)
                 })
-                console.log("-----SECOND READ STATEMENT-----")
                 connection.rollback()
-                console.log('success!');
                 connection.release();
         })
     })
@@ -301,6 +293,10 @@ function case3() {
                 filter(`DELETE FROM imdb_ijs.movies
                 WHERE id > 20 AND id <= 30`);
                 connection.query(`select sleep(40)`, (err, res) =>{
+                    return console.log(res)
+                })
+
+                connection.query(`select * from imdb_ijs.movies where id > 20 AND id <= 30`, (err, res) =>{
                     return console.log(res)
                 })
                 connection.rollback()

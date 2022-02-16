@@ -180,45 +180,22 @@ function case2() {
                     return console.log(res)
                 })
                 // Update movies with null ranks and id's <=30, set null ranks to 0.0
-                /*
-                connection.query(
-                    `UPDATE imdb_ijs.movies
-                    SET rank = 0.0
-                    WHERE rank is null and id <=30;`, (err, res) =>{
-                    if (err) { // safety net, rollback if update fails
-                        return connection.rollback(function() {
-                            throw err
-                        })
-                    }
-                    return console.log(res)
-                })
-                */
+                filter( `UPDATE imdb_ijs.movies
+                SET rank = 0.0
+                WHERE rank is null and id <=30;`);
                 console.log("-----UPDATE STATEMENT-----")
                 // Read, wait for 10 seconds, rollback
                 connection.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
                     return console.log(res)
                 })
-                pool1.getConnection(function(err,conn){
-                    pool3.getConnection(function(err,conn1){
-                    if (err) throw err; // means not connected
-                    conn.beginTransaction(function(err) {
-                        conn1.beginTransaction(function(err){
-                        if (err) { throw err; }
-                        filter( `UPDATE imdb_ijs.movies
-                SET rank = 0.0
-                WHERE rank is null and id <=30;`,connection,conn,conn1);
-                    })
-                    })
+               
+                pool3.query(`select * from imdb_ijs.movies where id <= 30`);
                 connection.query(`select sleep(10)`, (err, res) =>{
                     return console.log(res)
                 })
                 console.log("-----SECOND READ STATEMENT-----")
                 // rollback changes every time to test what other nodes are reading
                 connection.rollback();
-                conn.release();
-                conn1.release();
-            })
-        })
                 console.log('success!');
                 connection.release();
         })
@@ -232,7 +209,6 @@ function case2() {
      } catch (err) {
          console.log(err)
      }
-     console.log("done");
 }
 
 // Case #3: All transactions are writing (update / deletion).
@@ -244,16 +220,10 @@ function case3() {
             if (err) throw err
             connection.beginTransaction(function (err) {
                 if (err) throw err
-                connection.query(`UPDATE imdb_ijs.movies
-                                SET year = 1920
-                                WHERE id <= 10;`, (err, res) => {
-                    if (err) {
-                        return connection.rollback(function() {
-                            throw err
-                        })
-                    }
-                    return console.log(res)
-                })
+               
+                filter( `UPDATE imdb_ijs.movies
+                SET year = 1920
+                WHERE id <= 10;`);
                 connection.query(`select sleep(30)`, (err, res) =>{
                     return console.log(res)
                 })
@@ -276,17 +246,9 @@ function case3() {
                 connection.query(`select sleep(8)`, (err, res) =>{
                     return console.log(res)
                 })
-                connection.query(
-                    `UPDATE imdb_ijs.movies
-                    SET rank = 0.0
-                    WHERE rank is null and id <=30;`, (err, res) =>{
-                    if (err) {
-                        return connection.rollback(function() {
-                            throw err
-                        })
-                    }
-                    return console.log(res)
-                })
+                filter( `UPDATE imdb_ijs.movies
+                SET rank = 0.0
+                WHERE rank is null and id <=30;`);
                 console.log("-----UPDATE STATEMENT-----")
                 connection.query(`select * from imdb_ijs.movies where id <= 30`, (err, res) =>{
                     return console.log(res)
@@ -317,16 +279,9 @@ function case3() {
                     return console.log(res)
                 })
                 
-                
-                connection.query(`DELETE FROM imdb_ijs.movies
-                                WHERE id > 20 AND id <= 30`, (err, res) => {
-                    if (err) {
-                        return connection.rollback(function() {
-                            throw err
-                        })
-                    }
-                    return console.log(res)
-                })
+            
+                filter(`DELETE FROM imdb_ijs.movies
+                WHERE id > 20 AND id <= 30`);
                 connection.query(`select sleep(40)`, (err, res) =>{
                     return console.log(res)
                 })
@@ -338,10 +293,9 @@ function case3() {
      }
 }
 
-async function filter(query,node2,node1,node3){
+async function filter(query){
    
-  
-    node1.query(query, (err, res) =>{
+    pool1.query(query, (err, res) =>{
         if (err) { // safety net, rollback if update fails
             return connection.rollback(function() {
                 throw err
@@ -349,7 +303,7 @@ async function filter(query,node2,node1,node3){
         }
         return console.log(res)
     });
-    node2.query(query, (err, res) =>{
+    pool2.query(query, (err, res) =>{
         if (err) { // safety net, rollback if update fails
             return connection.rollback(function() {
                 throw err
@@ -357,7 +311,7 @@ async function filter(query,node2,node1,node3){
         }
         return console.log(res)
     });
-    node3.query(query, (err, res) =>{
+    pool3.query(query, (err, res) =>{
         if (err) { // safety net, rollback if update fails
             return connection.rollback(function() {
                 throw err
@@ -365,25 +319,9 @@ async function filter(query,node2,node1,node3){
         }
         return console.log(res)
     });
-    node3.query('delete from  imdb_ijs.movies where year >= 1980 ', (err, res) =>{
-        if (err) { // safety net, rollback if update fails
-            return connection.rollback(function() {
-                throw err
-            })
-        }
-        return console.log(res)
-    });
-    node2.query('delete from  imdb_ijs.movies where year < 1980 ', (err, res) =>{
-        if (err) { // safety net, rollback if update fails
-            return connection.rollback(function() {
-                throw err
-            })
-        }
-        return console.log(res)
-    });
-    node1.rollback();
-    node2.rollback();
-    node3.rollback();
+    pool3.query('delete from  imdb_ijs.movies where year >= 1980 ');
+    pool2.query('delete from  imdb_ijs.movies where year < 1980 ');
+    
     
 }
 function replicateDataIntoNodes(query, year){
